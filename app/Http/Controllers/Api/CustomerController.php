@@ -10,7 +10,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Input;
 use Validator, Redirect, Response;
 use Mail;
-use Myhelper;
+use App\Helpers\Myhelper;
 use App\Models\Customer;
 use App\Models\Appointment;
 use App\Imports\ImportCustomers;
@@ -44,7 +44,7 @@ class CustomerController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api');
+
     }
 
     public function listCustomers(Request $request)
