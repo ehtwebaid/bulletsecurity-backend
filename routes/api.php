@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
+use Tymon\JWTAuth\Http\Middleware\Authenticate;
+use App\Http\Middleware\EnsureApiAuthenticated;
 
 date_default_timezone_set('Pacific/Pitcairn');
 /*
@@ -23,17 +25,23 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Route::post('forgotPassword', 'App\Http\Controllers\Api\AuthController@forgotPassword');
 // Route::post('file-upload', 'App\Http\Controllers\ApiApi\AuthController@fileUpload');
-// Route::middleware('auth:api')->group(function () {
-// Route::post('listCustomers', [\App\Http\Controllers\Api\CustomerController::class, 'listCustomers']);
-// });
+Route::middleware('auth:sanctum')->group(function () {
+Route::post('listCustomers', [\App\Http\Controllers\Api\CustomerController::class, 'listCustomers']);
+Route::post('addCustomer', [\App\Http\Controllers\Api\CustomerController::class, 'addCustomer']);
+Route::post('deleteCustomer', [\App\Http\Controllers\Api\CustomerController::class, 'deleteCustomer']);
+Route::post('editNote', [\App\Http\Controllers\Api\CustomerController::class, 'editNote']);
+Route::post('dailyCustomers', [\App\Http\Controllers\Api\CustomerController::class, 'dailyCustomers']);
+Route::post('importCustomer', [\App\Http\Controllers\Api\CustomerController::class, 'importCustomer']);
+Route::post('mergeCustomer', [\App\Http\Controllers\Api\CustomerController::class, 'mergeCustomer']);
+Route::post('all-customer', [\App\Http\Controllers\Api\CustomerController::class, 'allCustomers']);
+Route::post('submitMerge', [\App\Http\Controllers\Api\CustomerController::class, 'submitMerge']);
+
+Route::post('logOut', [\App\Http\Controllers\Api\AuthController::class, 'logOut']);
+Route::post('changePassword', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
+});
 
 
-// Route::post('changePassword', 'Api\AuthController@changePassword')->middleware('auth:api');
-// Route::post('logOut', 'Api\AuthController@logOut')->middleware('auth:api');
 
-// Route::post('listCustomers', 'Api\CustomerController@listCustomers')->middleware('auth:api');
-// Route::post('addCustomer', 'Api\CustomerController@addCustomer')->middleware('auth:api');
-// Route::post('deleteCustomer', 'Api\CustomerController@deleteCustomer')->middleware('auth:api');
 // Route::post('service/listing', 'Api\CustomerserviceController@listing')->middleware('auth:api');
 // Route::post('service/add', 'Api\CustomerserviceController@add')->middleware('auth:api');
 // Route::post('service/delete', 'Api\CustomerserviceController@delete')->middleware('auth:api');
@@ -54,8 +62,6 @@ Route::post('/login', [AuthController::class, 'login']);
 // Route::post('setting/edit', 'Api\SettingController@edit')->middleware('auth:api', 'checkrole:admin,""');
 // Route::post('setting/basicsetting', 'Api\SettingController@basicsetting')->middleware('auth:api');
 // Route::post('setting/calenderHeading', 'Api\SettingController@calenderHeading')->middleware('auth:api');
-// Route::post('editNote', 'Api\CustomerController@editNote')->middleware('auth:api', 'checkrole:admin,""');
-// Route::post('dailyCustomers', 'Api\CustomerController@dailyCustomers')->middleware('auth:api');
 
 // Route::post('statistics', 'Api\AppointmentController@statistics')->middleware('auth:api', 'checkrole:admin,""');
 // Route::post('viewAppointment', 'Api\AppointmentController@viewAppointment')->middleware('auth:api');
@@ -66,13 +72,9 @@ Route::post('/login', [AuthController::class, 'login']);
 // Route::post('viewcompanySetting', 'Api\SettingController@viewcompanySetting')->middleware('auth:api', 'checkrole:admin,""');
 // Route::post('editcompanySetting', 'Api\SettingController@editcompanySetting')->middleware('auth:api', 'checkrole:admin,""');
 // Route::post('monthlyReport', 'Api\StaffController@monthlyReport')->middleware('auth:api', 'checkrole:admin,""');
-// Route::post('importCustomer', 'Api\CustomerController@importCustomer')->middleware('auth:api','checkrole:admin,""');
-// Route::post('mergeCustomer', 'Api\CustomerController@mergeCustomer')->middleware('auth:api','checkrole:admin,""');
-// Route::post('all-customer', 'Api\CustomerController@allCustomers')->middleware('auth:api');
 // Route::post('business-hour', 'Api\StaffController@findbusinessHours')->middleware('auth:api');
 // Route::post('staffAvailability', 'Api\StaffController@staffAvailability')->middleware('auth:api');
 
-// Route::post('submitMerge', 'Api\CustomerController@submitMerge')->middleware('auth:api','checkrole:admin,""');
 // Route::post('reSchedule', 'Api\AppointmentController@reSchedule')->middleware('auth:api');
 // Route::post('currentAppointment', 'Api\AppointmentController@currentAppointment')->middleware('auth:api');
 // Route::post('my-favourite', 'Api\AppointmentController@myFavouriteList')->middleware('auth:api');
