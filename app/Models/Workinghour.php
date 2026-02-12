@@ -1,13 +1,13 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Workinghour extends Model
 {
     //
-       protected $table = 'working_hours';
+    protected $table = 'working_hours';
 	public $timestamps = true;
 	/**
 	 * The attributes that are mass assignable.

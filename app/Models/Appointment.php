@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\AppointmentLog;
@@ -63,7 +63,7 @@ class Appointment extends Model
             $original = array_map(function ($value) {
                 return $value === null ? 0 : $value;
             }, $original);
-            
+
             $changedFields = array_map(function ($value) {
                 return $value === null ? 0 : $value;
             }, $changedFields);
@@ -76,10 +76,10 @@ class Appointment extends Model
                 // Exclude if original value is null and new value is 0
                 return !(is_null($originalValue) && $value == 0);
             }, ARRAY_FILTER_USE_BOTH);
-        
+
             // If no relevant changes, prevent the update
             if (empty($filteredChanges)) {
-              
+
                 return false;
             }
             if (!empty($changedFields)) {
