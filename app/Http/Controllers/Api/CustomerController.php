@@ -209,6 +209,7 @@ class CustomerController extends Controller
             } else {
                 $cutomer = new Customer();
             }
+
             $cutomer->name = !is_null($request->name)?$request->name:$request->primary_contact_name;
             $cutomer->mobile = $request->mobile;
             $cutomer->primary_contact_name = $request->primary_contact_name;

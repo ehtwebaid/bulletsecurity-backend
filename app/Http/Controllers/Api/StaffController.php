@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Input;
 use Validator, Redirect, Response;
 use Illuminate\Support\Facades\Crypt;
 use Mail;
-use Myhelper;
+use App\Helpers\Myhelper;
 use App\Models\Staff;
 use App\Models\User;
 use App\Models\Workinghour;
@@ -49,23 +49,30 @@ class StaffController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api');
     }
 
     public function listStaff(Request $request)
     {
         try {
             $staff_lists = [];
-            $or_cond = [];
-            $or_cond[] = ['user_type', 'staff'];
-            $or_cond[] = ['user_type', 'admin'];
-            $cond[] = ['id', '!=', 1];
+            $query = User::query();
+            // always exclude super admin
+            $query->where('id', '!=', 1);
 
-            if ($request->ignore_delete) {
-            } else {
-                $cond[] = ['is_del', 0];
+            // apply soft delete condition only when needed
+            if (!$request->ignore_delete) {
+                $query->where('is_del', 0);
             }
-            $staffs = User::where($cond)->orWhere($or_cond)->select('id', 'name', 'email', 'phone_no', 'current_status', 'user_type')->with(['staff'])->orderBy('sort_order', 'asc')->get();
+
+            // filter roles
+            $query->whereIn('user_type', ['staff', 'admin']);
+
+            $staffs = $query
+                ->select('id','name','email','phone_no','current_status','user_type')
+                ->with('staff')
+                ->orderBy('sort_order','asc')
+                ->get();
+
             foreach ($staffs as $staff) {
                 $access_level = [];
 
@@ -117,15 +124,24 @@ class StaffController extends Controller
             //$no_emp=$setting->no_emp;
             $no_emp = 1000;
             $staff_lists = [];
-            $or_cond = [];
-            $or_cond[] = ['user_type', 'staff'];
-            $or_cond[] = ['user_type', 'admin'];
-            $cond[] = ['is_del', 0];
-            $cond[] = ['id', '!=', 1];
-            if (!empty($request->staff_id) and is_numeric($request->staff_id)) {
-                $cond[] = ['id', $request->staff_id];
-            }
-            $staffs = User::where($cond)->orWhere($or_cond)->select('id', 'name', 'email', 'phone_no', 'current_status', 'sort_order')->with(['staff'])->orderBy('sort_order', 'asc')->offset(0)->limit($no_emp)->get();
+            $cond = [
+            ['is_del', 0],
+            ['id', '!=', 1],
+        ];
+
+        if (!empty($request->staff_id) && is_numeric($request->staff_id)) {
+            $cond[] = ['id', $request->staff_id];
+        }
+
+        $staffs = User::where($cond)
+            ->whereIn('user_type', ['staff','admin'])
+            ->select('id','name','email','phone_no','current_status','sort_order')
+            ->with(['staff'])
+            ->orderBy('sort_order','asc')
+            ->offset(0)
+            ->limit($no_emp)
+            ->get();
+
             foreach ($staffs as $staff) {
                 $access_level = [];
                 // if(!empty($staff->staff->access_level))
@@ -184,7 +200,7 @@ class StaffController extends Controller
             }
             $log = new Log();
             $log->user_id=$request->user_id;
-            $log->action_by=\Auth::guard('api')->id();
+            $log->action_by=auth()->id();
             $log->action='force_log_out';
             $log->ip=$request->ip();
             $log->save();

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Setting extends Model
 {
     //
-       protected $table = 'calender_settings';
+    protected $table = 'calender_settings';
 	public $timestamps = true;
 	/**
 	 * The attributes that are mass assignable.

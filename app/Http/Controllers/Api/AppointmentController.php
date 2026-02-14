@@ -1,25 +1,25 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;   // ⭐ ADD THIS
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Input;
 use Validator, Redirect, Response;
 use Illuminate\Support\Facades\Crypt;
 use Mail;
-use Myhelper;
+use App\Helpers\Myhelper;
 use App\Models\Staff;
 use App\Models\User;
-use Ap\Models\Apppointment;
+use App\Models\Appointment;
 use App\Models\RepeatAppointment;
 use App\Models\AppointmentLog;
 use App\Models\Favourite;
 use Storage;
 use DB;
+
 
 class AppointmentController extends Controller
 {
@@ -204,7 +204,7 @@ class AppointmentController extends Controller
                             'is_favourite' => "0"
                         ];
                     }
-                    $auth_user_id=\Auth::guard('api')->id();
+                    $auth_user_id=auth()->id();
                     $matchThese = ['user_id'=>$auth_user_id,'appoinment_id'=>$appointment->id];
                     Favourite::updateOrCreate($matchThese,$fav_data);
                     if ($request->is_repeat != 'N') {
@@ -351,7 +351,7 @@ class AppointmentController extends Controller
 
             $codition[] = ['repeat_appointments.start_time', '>=', $request->start_date . ' 00:00:00'];
             $codition[] = ['repeat_appointments.end_time', '<=', $request->end_date . ' 23:59:59'];
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $appointments_raw = Appointment::select('appointments.id')
                 ->leftJoin('repeat_appointments', 'repeat_appointments.appointment_id', '=', 'appointments.id')
                 ->with(['favourite_dtls' => function ($query) use($auth_user_id) {
@@ -385,12 +385,13 @@ class AppointmentController extends Controller
                     $events[] = $this->eventDetail($appointment->id, $request->start_date,$mode);
                 }
             }
+           $staffs = User::where('is_del', 0)
+        ->where('id', '!=', 1)
+        ->whereIn('user_type', ['staff', 'admin'])
+        ->select('id', 'name', 'sort_order')
+        ->orderBy('sort_order', 'asc')
+        ->get();
 
-            $cond[] = ['is_del', 0];
-            $cond[] = ['id', '!=', 1];
-            $or_cond[] = ['user_type', 'staff'];
-            $or_cond[] = ['user_type', 'admin'];
-            $staffs = User::where($cond)->orWhere($or_cond)->select('id', 'name', 'sort_order')->orderBy('sort_order', 'asc')->get();
             $working_hours = [];
             if (($default_mode == 'resourceTimeGrid')) {
                 foreach ($staffs as $staff) {
@@ -467,7 +468,7 @@ class AppointmentController extends Controller
             ->where($cond)->groupBy('staff_id')->get();
             foreach( $newsameAppointments as  $sameAppointment)
             {
-                if(\Auth::guard('api')->id()!=$sameAppointment->staff->id and \Auth::guard('api')->id()>1 and count($newsameAppointments)>1)
+                if(auth()->id()!=$sameAppointment->staff->id and auth()->id()>1 and count($newsameAppointments)>1)
                 {
                     $staffs[]='<span class="text-danger" style="color:#f00;">'.$sameAppointment->staff->name.'</span>';
                 }
@@ -545,7 +546,7 @@ class AppointmentController extends Controller
             if (!empty($request->customer_id)) {
                 $codition[] = ['appointments.customer_id', $request->customer_id];
             }
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $totalCount = Appointment::select($select)
                 ->leftJoin('repeat_appointments', 'repeat_appointments.appointment_id', '=', 'appointments.id')
 
@@ -606,7 +607,7 @@ class AppointmentController extends Controller
                         ->where($cond)->groupBy('staff_id')->get();
                         foreach( $newsameAppointments as  $sameAppointment)
                         {
-                            if(\Auth::guard('api')->id()!=$sameAppointment->staff->id and \Auth::guard('api')->id()>1 and count($newsameAppointments)>1)
+                            if(auth()->id()!=$sameAppointment->staff->id and auth()->id()>1 and count($newsameAppointments)>1)
                             {
                                 $sameAppointmets[]='<span class="text-danger" style="color:#f00;">'.$sameAppointment->staff->name.'</span>';
                             }
@@ -707,7 +708,7 @@ class AppointmentController extends Controller
                     'is_favourite' => "0"
                 ];
             }
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $matchThese = ['user_id'=>$auth_user_id,'appoinment_id'=>$appointment->id];
             Favourite::updateOrCreate($matchThese,$fav_data);
             $repeatApt = RepeatAppointment::where('appointment_id', $appointment->id)->first();
@@ -952,7 +953,7 @@ class AppointmentController extends Controller
                 $errors = Myhelper::customerrors($validator->errors());
                 return response()->json(['status' => false, 'error' => $errors, 'data' => [], "code" => 200], 200);
             }
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $appointment = Appointment::with(['staff' => function ($query) {
                 $query->select('id', 'name');
             }, 'service', 'customer','favourite_dtls' => function ($query1) use($auth_user_id,$request) {
@@ -994,7 +995,7 @@ class AppointmentController extends Controller
 
                 foreach( $newsameAppointments as  $sameAppointment)
                 {
-                    if(\Auth::guard('api')->id()!=$sameAppointment->staff->id and \Auth::guard('api')->id()>1 and count($newsameAppointments)>1)
+                    if(auth()->id()!=$sameAppointment->staff->id and auth()->id()>1 and count($newsameAppointments)>1)
                     {
                         $sameAppointmets[]='<span class="text-danger" style="color:#f00;">'.$sameAppointment->staff->name.'</span>';
                     }
@@ -1119,7 +1120,7 @@ class AppointmentController extends Controller
     }
     public function eventDetail($id, $date = '',$default_mode='')
     {
-        $auth_user_id=\Auth::guard('api')->id();
+        $auth_user_id=auth()->id();
         $appointment = Appointment::with(['staff' => function ($query) use($auth_user_id){
             $query->select('id', 'name');
         }, 'service', 'customer','favourite_dtls' => function ($query1) use($auth_user_id) {
@@ -1144,7 +1145,7 @@ class AppointmentController extends Controller
 
             foreach( $newsameAppointments as  $sameAppointment)
             {
-                if(\Auth::guard('api')->id()!=$sameAppointment->staff->id and \Auth::guard('api')->id()>1 and count($newsameAppointments)>1)
+                if(auth()->id()!=$sameAppointment->staff->id and auth()->id()>1 and count($newsameAppointments)>1)
                 {
                     $sameAppointmets[]='<span class="text-danger" style="color:#f00;">'.$sameAppointment->staff->name.'</span>';
                 }
@@ -1310,7 +1311,7 @@ class AppointmentController extends Controller
     public function myFavouriteList(Request $request)
     {
         // try {
-        //     $auth_user_id=\Auth::guard('api')->id();
+        //     $auth_user_id=auth()->id();
         //     $list = Favourite::with('appoinment_dtls')->where('user_id',$auth_user_id)->where('is_favourite','1')->get();
         //     return response()->json([
         //         'status' => true,
@@ -1345,7 +1346,7 @@ class AppointmentController extends Controller
             if (!empty($request->customer_id)) {
                 $codition[] = ['appointments.customer_id', $request->customer_id];
             }
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $totalCount = Appointment::select($select)
             ->whereHas('favourite_dtls' , function ($query) use($auth_user_id) {
                 $query->where('user_id', $auth_user_id);
@@ -1417,7 +1418,7 @@ class AppointmentController extends Controller
                         ->where($cond)->groupBy('staff_id')->get();
                         foreach( $newsameAppointments as  $sameAppointment)
                         {
-                            if(\Auth::guard('api')->id()!=$sameAppointment->staff->id and \Auth::guard('api')->id()>1 and count($newsameAppointments)>1)
+                            if(auth()->id()!=$sameAppointment->staff->id and auth()->id()>1 and count($newsameAppointments)>1)
                             {
                                 $sameAppointmets[]='<span class="text-danger" style="color:#f00;">'.$sameAppointment->staff->name.'</span>';
                             }
@@ -1463,7 +1464,7 @@ class AppointmentController extends Controller
                 $errors = Myhelper::customerrors($validator->errors());
                 return response()->json(['status' => false, 'error' => $errors, 'data' => [], "code" => 200], 200);
             }
-            $auth_user_id=\Auth::guard('api')->id();
+            $auth_user_id=auth()->id();
             $details = Favourite::where('appoinment_id',$request->appoinment_id)->where('user_id',$auth_user_id)->first();
 
             if($details)

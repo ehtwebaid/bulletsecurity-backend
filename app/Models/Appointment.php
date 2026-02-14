@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\AppointmentLog;
+use App\Models\AppointmentLog;
 use Illuminate\Support\Facades\Auth;
 class Appointment extends Model
 {
@@ -86,7 +86,7 @@ class Appointment extends Model
                 AppointmentLog::create([
                     'action'  => request()->input('action'), // Custom log title from request
                     'appointment_id'   => $model->id,
-                    'user_id'   =>\Auth::guard('api')->id(),
+                    'user_id'   =>auth()->id(),
                     'changes'    => ([
                         'before' => array_intersect_key($result1, $result2),
                         'after'  => $result2,

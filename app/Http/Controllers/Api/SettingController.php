@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Input;
 use Validator,Redirect,Response;
 use Illuminate\Support\Facades\Crypt;
 use Mail;
-use Myhelper;
+use App\Helpers\Myhelper;
 use App\Models\Setting;
 use Storage;
 use DB;
@@ -232,7 +232,7 @@ class SettingController extends Controller
     public function editcompanySetting(Request $request)
     {
         try {
-          $companySetting= \App\Basicsetting::find(1);
+          $companySetting= \App\Models\Basicsetting::find(1);
           $validator = Validator::make($request->all(), [
             'industry' => 'required',
             'company_name' => 'required',
