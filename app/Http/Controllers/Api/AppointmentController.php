@@ -119,6 +119,7 @@ class AppointmentController extends Controller
                // echo "<pre>";print_r($staffs);exit;
                 foreach($staffs as $staff)
                 {
+
                     $is_repeat='N';
                     $request->bulk_update = $request->bulk_update === 'true'? true: false;
 
@@ -135,11 +136,10 @@ class AppointmentController extends Controller
                         $request->duration = $service->minutes;
                     }
                     $request->start_time = date('Y-m-d H:i:s', strtotime($request->start_time));
+
                     $end_time = Carbon::parse($request->start_time)
-                        ->addMinutes($request->duration)
+                        ->addMinutes((int)$request->duration)
                         ->format('Y-m-d H:i:s');
-
-
                     $appointment->customer_id = is_numeric($customer_id) ? $customer_id : 0;
                     $appointment->customerservice_id = ($request->customerservice_id != 'null') ? $request->customerservice_id : 0;
                     $appointment->start_time = $request->start_time;
@@ -237,13 +237,12 @@ class AppointmentController extends Controller
 
 
 
-                    $pusher_response = [
-                        'status' => true,
-                        'message' => "Appointment has been set successfully",
-                        'data' => ['id' => $appointment->id, 'date' => '','staff_id'=>$staff_id],
-                        'is_del' => false,
-                    ];
-                    event(new updateCalendar($pusher_response));
+                $cal_response = [
+                    'status' => true,
+                    'data' => ['id' => $appointment->id,'staff_id'=>$staff_id],
+                    'is_del' => false,
+                ];
+           event(new updateCalendar($cal_response));
 
                 }
 
@@ -704,7 +703,7 @@ class AppointmentController extends Controller
                 'data' => ['id' => $appointment->id, 'date' => $request->currentDate,'staff_id'=>$staff_id],
                 'is_del' => false,
             ];
-            event(new updateCalendar($response));
+            event(new updateCalendar(($response)));
             return response()->json([
                 'status' => true,
                 'message' => "Appointment has been set successfully",
@@ -811,7 +810,7 @@ class AppointmentController extends Controller
             $appointment = Appointment::find($request->id);
             $duration = Myhelper::getDuration($request->id);
             $end_time = Carbon::parse($request->start_time)
-                ->addMinutes($duration)
+                ->addMinutes((int)$duration)
                 ->format('Y-m-d H:i:s');
             $repeatApt = RepeatAppointment::where('appointment_id', $appointment->id)->first();
             $repeatApt->start_time = $request->start_time;

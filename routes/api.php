@@ -22,6 +22,8 @@ date_default_timezone_set('Pacific/Pitcairn');
 //});
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('forgotPassword', '\App\Http\Controllers\Api\AuthController@forgotPassword');
+Route::post('file-upload', '\App\Http\Controllers\Api\AuthController@fileUpload');
 
 
 Route::middleware('auth:sanctum')->group(function () {
