@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Input;
+use App\Events\updateCalendar;
 use Validator, Redirect, Response;
 use Illuminate\Support\Facades\Crypt;
 use Mail;
@@ -57,17 +58,6 @@ class AppointmentController extends Controller
         try {
             //dd($request->all());
 
-            require base_path() . '/vendor/pusher/autoload.php';
-            $app_id = getenv('PUSHER_APP_ID');
-            $app_key = getenv('PUSHER_API_KEY');
-            $app_secret = getenv('PUSHER_SECRET_KEY');
-
-            $options = array(
-                'cluster' => getenv('PUSHER_CLUSTER'),
-                'useTLS' => true
-            );
-
-            $pusher = new Pusher\Pusher($app_key, $app_secret, $app_id, $options);
             $validator = Validator::make($request->all(), [
                 'staff_id' => 'required|exists:users,id',
                 'start_time' => 'required',
@@ -253,8 +243,8 @@ class AppointmentController extends Controller
                         'data' => ['id' => $appointment->id, 'date' => '','staff_id'=>$staff_id],
                         'is_del' => false,
                     ];
+                    event(new updateCalendar($pusher_response));
 
-                    $pusher->trigger('my-channel', 'my-event', json_encode($pusher_response));
                 }
 
                 $response = [
@@ -440,7 +430,7 @@ class AppointmentController extends Controller
     public function delete(Request $request)
     {
         try {
-            require base_path() . '/vendor/pusher/autoload.php';
+
             $validator = Validator::make($request->all(), [
                 'id' => 'required|exists:appointments,id',
             ]);
@@ -478,14 +468,7 @@ class AppointmentController extends Controller
                 }
                 $tobe_updated_appointments[]=$sameAppointment->id;
             }
-            $app_id = getenv('PUSHER_APP_ID');
-            $app_key = getenv('PUSHER_API_KEY');
-            $app_secret = getenv('PUSHER_SECRET_KEY');
 
-            $options = array(
-                'cluster' => getenv('PUSHER_CLUSTER'),
-                'useTLS' => true
-            );
 
             if($request->bulk_delete)
             {
@@ -500,15 +483,13 @@ class AppointmentController extends Controller
 
                 }
             }
-            $pusher = new Pusher\Pusher($app_key, $app_secret, $app_id, $options);
 
             $response = [
                 'status' => true,
                 'data' => ['id' => $id,'staff_id'=>$staff_id,'staff_name'=>implode(" + ",$staffs),'appointments'=>$tobe_updated_appointments],
                 'is_del' => true,
             ];
-            $pusher->trigger('my-channel', 'my-event', json_encode($response));
-
+           event(new updateCalendar($response));
             return response()->json([
                 'status' => true,
                 'message' => "Appointment has been Deleted successfully",
@@ -647,7 +628,7 @@ class AppointmentController extends Controller
     public function editAppointment(Request $request)
     {
         try {
-            require base_path() . '/vendor/pusher/autoload.php';
+
             $setting =\App\Models\Setting::where('id', 1)->first();
             request()->merge(['action' => 'Re-Schedule']);
             $validator = Validator::make($request->all(), [
@@ -663,19 +644,7 @@ class AppointmentController extends Controller
                 return response()->json(['status' => false, 'error' => $errors, 'data' => [], "code" => 200], 200);
             }
             $customer_id=!empty($request->customer_id)?$request->customer_id:'';
-            // if(!empty($customer_id) && $customer_id > 0)
-            // {
-            //     if(empty($request->customer_link))
-            //     {
-            //         return response()->json([
-            //             'status' => false,
-            //             'data' => [],
-            //             'message' => 'Customer link cannot be empty if customer added.',
-            //             'error' => ['Customer link cannot be empty if customer added.']
 
-            //         ], 200);
-            //     }
-            // }
 
             $request->bulk_update = $request->bulk_update === 'true'? true: false;
             $appointment = Appointment::find($request->id);
@@ -729,24 +698,13 @@ class AppointmentController extends Controller
             }
 
             }
-            $app_id = getenv('PUSHER_APP_ID');
-            $app_key = getenv('PUSHER_API_KEY');
-            $app_secret = getenv('PUSHER_SECRET_KEY');
-
-            $options = array(
-                'cluster' => getenv('PUSHER_CLUSTER'),
-                'useTLS' => true
-            );
-
-            $pusher = new Pusher\Pusher($app_key, $app_secret, $app_id, $options);
-
 
             $response = [
                 'status' => true,
                 'data' => ['id' => $appointment->id, 'date' => $request->currentDate,'staff_id'=>$staff_id],
                 'is_del' => false,
             ];
-            $pusher->trigger('my-channel', 'my-event', json_encode($response));
+            event(new updateCalendar($response));
             return response()->json([
                 'status' => true,
                 'message' => "Appointment has been set successfully",
@@ -847,7 +805,7 @@ class AppointmentController extends Controller
     public function reSchedule(Request $request)
     {
         try {
-            require base_path() . '/vendor/pusher/autoload.php';
+
             $request->bulk_update = $request->bulk_update === 'true'? true: false;
             request()->merge(['action' => 'Re-Schedule']);
             $appointment = Appointment::find($request->id);
@@ -906,25 +864,14 @@ class AppointmentController extends Controller
 
 
             $event = $this->eventDetail($appointment->id);
-            $app_id = getenv('PUSHER_APP_ID');
-            $app_key = getenv('PUSHER_API_KEY');
-            $app_secret = getenv('PUSHER_SECRET_KEY');
 
-            $options = array(
-                'cluster' => getenv('PUSHER_CLUSTER'),
-                'useTLS' => true
-            );
-
-            $pusher = new Pusher\Pusher($app_key, $app_secret, $app_id, $options);
 
             $response = [
                 'status' => true,
                 'data' => ['id' => $appointment->id, 'date' => '','staff_id'=>$staff_id],
                 'is_del' => false,
             ];
-            $pusher->trigger('my-channel', 'my-event', json_encode($response));
-
-
+            event(new updateCalendar($response));
             return response()->json([
                 'status' => true,
                 'message' => "Appointment has been rescheduled successfully",
