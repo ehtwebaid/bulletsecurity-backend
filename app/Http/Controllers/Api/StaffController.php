@@ -18,6 +18,8 @@ use App\Models\Workinghour;
 use App\Models\Appointment;
 use App\Models\AppointmentLog;
 use App\Models\Log;
+use App\Events\forceLogout;
+
 use Storage;
 use DB;
 use DateTime;
@@ -179,17 +181,7 @@ class StaffController extends Controller
     {
 
         try {
-            require base_path() . '/vendor/pusher/autoload.php';
-            $app_id = getenv('PUSHER_APP_ID');
-            $app_key = getenv('PUSHER_API_KEY');
-            $app_secret = getenv('PUSHER_SECRET_KEY');
 
-            $options = array(
-                'cluster' => getenv('PUSHER_CLUSTER'),
-                'useTLS' => true
-            );
-
-            $pusher = new Pusher\Pusher($app_key, $app_secret, $app_id, $options);
             $validator = Validator::make($request->all(), [
                 //'name' => 'required|regex:/^[a-zA-Z\s]+$/u|max:255',
                 'user_id'     => 'required',
@@ -204,14 +196,9 @@ class StaffController extends Controller
             $log->action='force_log_out';
             $log->ip=$request->ip();
             $log->save();
-            $pusher_response = [
-                'status' => false,
-                'logOut' => true,
-                'message' => "Log out successfully",
-                'data' => ['user_id' => $request->user_id, 'type' => 'force_log_out'],
-            ];
 
-            $pusher->trigger('my-channel', 'my-event', json_encode($pusher_response));
+            event(new forceLogout(['data'=>['user_id'=>$request->user_id]]));
+
             $response = [
                 'status' => true,
                 'message' => "Force Log out successfully",

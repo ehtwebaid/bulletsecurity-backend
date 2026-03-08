@@ -19,3 +19,6 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('updateCalendar', function () {
     return true;
 });
+Broadcast::channel('forceLogout', function () {
+    return true;
+});
